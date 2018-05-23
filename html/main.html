@@ -1,0 +1,327 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>首页</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+    <style>
+        #footer{  background-color: #f2f2f2; }
+        #footer ul li{  padding-top: 36px; padding-bottom: 4px; background: url() no-repeat center 2px; background-size: auto 30px; text-align: center; }
+        #footer ul li.active{ color: #6ab494; }
+        #footer ul li:nth-child(1){ background-image: url(../image/bottombtn0101.png); }
+        #footer ul li:nth-child(2){ background-image: url(../image/bottombtn0201.png); }
+        #footer ul li:nth-child(3){ background-image: url(../image/bottombtn0301.png); }
+
+        #footer ul li:nth-child(1).active{ background-image: url(../image/bottombtn0102.png); }
+        #footer ul li:nth-child(2).active{ background-image: url(../image/bottombtn0202.png); }
+        #footer ul li:nth-child(3).active{ background-image: url(../image/bottombtn0302.png); }
+
+        .flex-con{
+          overflow: auto
+        }
+    </style>
+</head>
+<body>
+<div id="wrap" class="flex-wrap flex-vertical">
+    <header>
+      <h1>互补出行</h1>
+      <div class="right" tapmode onclick="fnOpenCity();">
+        <div class="arrow"></div>
+        <div class="city">请选择</div>
+      </div>
+      <div class="left" tapmode onclick="fnOpenUpuseroutWin();">
+        <div class="city">发布出行</div>
+      </div>
+    </header>
+
+    <div id="main" class="flex-con">
+
+    </div>
+    <div id="footer" class="border-t">
+        <ul class="flex-wrap" >
+            <li tapmode="hover" taomode="active" onclick="randomSwitchBtn( this );" class="flex-con active" >首页</li>
+            <li tapmode="hover" taomode="active" onclick="randomSwitchBtn( this );" class="flex-con" >聊天区</li>
+            <li tapmode="hover" taomode="active" onclick="randomSwitchBtn( this );" class="flex-con" >个人信息</li>
+
+        </ul>
+    </div>
+</div>
+</body>
+</html>
+
+
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/jquery-2.1.0.js"></script>
+<script type="text/javascript" src="../script/SHA1.js"></script>
+<script type="text/javascript">
+    apiready = function () {
+
+        //
+        initEventListenner();
+
+        funIniGroup();
+
+        //监听完成城市选择消息，跳转至首页
+        api.addEventListener({
+            name: 'cityfinish',
+        }, function(ret, err){
+            if( ret ){
+                 randomSwitchBtn(0);
+            }
+        });
+
+        fnCheckMsg();
+
+    }
+
+
+var eFootLis = $api.domAll('#footer li')
+
+function initEventListenner(){
+  api.addEventListener({
+      name: 'keyback'
+  }, function(ret, err) {
+      api.confirm({
+          title: '提示',
+          msg: '是否退出应用',
+          buttons: ['确定', '取消']
+      }, function(ret, err) {
+          if (ret.buttonIndex == 1) {
+              // 关闭当前的主Widget，就可以实现推出APP的效果
+              api.closeWidget({
+                  silent: true //直接退出，无需提示
+              });
+          }
+      });
+  });
+}
+
+    function funIniGroup(){
+        var frames = [];
+        for (var i = 0,len = 3; i < len; i++) {
+                frames.push( {
+                    name: 'frame'+i,
+                    url: './frame'+i+'.html',
+                    customRefreshHeader: 'UIPullRefreshFlash',
+                } )
+        }
+        api.openFrameGroup({
+            name: 'group',
+            scrollEnabled: true,
+            rect: {
+                x: 0,
+                y: 50,
+                w: api.winWidth,
+                h: $api.dom('#main').offsetHeight
+            },
+            index: 0,
+            frames: frames
+        }, function (ret, err) {
+          fnSetFootLiAction(ret.index);
+        });
+    }
+
+    // 滑动切换
+    function fnSetFootLiAction(index){
+      for (var i = 0; i < 3; i++) {
+        if(index == i){
+          $api.addCls(eFootLis[i],'active')
+        }else{
+          $api.removeCls(eFootLis[i], 'active');
+        }
+      }
+    }
+
+    // 随意切换按钮
+    function randomSwitchBtn( tag ) {
+        if( tag == $api.dom('#footer li.active') )return;
+            index = 0;
+        for (var i = 0,len = eFootLis.length; i < len; i++) {
+            if( tag == eFootLis[i] ){
+                index = i;
+            }else{
+                $api.removeCls(eFootLis[i], 'active');
+            }
+        }
+        $api.addCls( eFootLis[index], 'active');
+        api.setFrameGroupIndex({
+                    name: 'group',
+                    index: index
+                });
+    }
+var sob=0;
+    // 点击城市按钮事件
+    function fnOpenCity(){
+      if(sob==0){
+        api.openFrame({
+            name: 'cityselect',
+            url: './shouye/cityselect.html',
+            rect: {
+                x: 0,
+                y: 50,
+                w: "auto",
+                h: "auto"
+            },
+            pageParam: {
+                from: 'main'
+            },
+            bgColor: 'rgba(0,0,0,0.6)'
+        });
+        sob=1;
+      }else if(sob==1){
+        api.closeFrame({
+            name: 'cityselect'
+        });
+        sob=0;
+      }
+    }
+
+//打开发布界面
+function fnOpenUpuseroutWin(){
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  //判断用户是否登陆
+  if(userInfo && username){
+      api.openWin({
+          name: 'UpUserOutInfo',
+          url: './shouye/UpUserOutInfo.html',
+          pageParam: {
+              name: 'test'
+          }
+      });
+  }
+  else{
+    alert("请先登录");
+    api.openWin({
+      name: 'dologin',
+      url: './login/dologin.html',
+      pageParam: {
+          name: 'test'
+      }
+    });
+  }
+}
+
+function fnCheckMsg(){
+  var userInfo = $api.getStorage('userInfo');
+  if(userInfo){
+    var params = {
+        fields: {
+            createdAt: false,
+            updatedAt: false
+        },
+        where: {
+          end_id: userInfo.userId,
+          status: 0,
+        },
+        skip: 0,
+        limit: 998
+    }
+    params = $api.jsonToStr(params);
+    api.ajax({
+        url: 'https://d.apicloud.com/mcm/api/msg?filter='+ params,
+        method: 'get',
+        headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+        }
+    },function(ret, err){
+      // alert( JSON.stringify( ret )+userInfo.userId );
+      if (ret!="") {
+        api.toast({
+            msg: "你有"+ret.length+"条申请未处理",
+            duration: 2000,
+            location: 'bottom'
+        });
+      }
+
+
+
+      var params1 = {
+          fields: {
+              createdAt: false,
+              updatedAt: false
+          },
+          where: {
+            start_id: userInfo.userId,
+            status: 1,
+          },
+          skip: 0,
+          limit: 1
+      }
+      params1 = $api.jsonToStr(params1);
+      api.ajax({
+          url: 'https://d.apicloud.com/mcm/api/msg?filter='+ params1,
+          method: 'get',
+          headers: {
+            "X-APICloud-AppId": "A6075394048820",
+            "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+          }
+      },function(ret, err){
+          if (ret!="") {
+            // 将MSGbox的status设置为2
+            api.ajax({
+                url: 'https://d.apicloud.com/mcm/api/msg/'+ ret[0].id,
+                method: 'put',
+                headers: {
+                    "X-APICloud-AppId": "A6075394048820",
+                    "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                    "Authorization": userInfo.id
+                },
+                data: {
+                 values: {
+                     'status': "2",
+                 },
+                }
+            },function(ret, err){});
+            // 设置用户表的into_id
+            var params2 = {
+                  fields: {
+                      createdAt: false,
+                      updatedAt: false
+                  },
+                  where: {
+                    m_userid: ret[0].end_id,
+                  },
+                  skip: 0,
+                  limit: 1
+              }
+              params2 = $api.jsonToStr(params2);
+              api.ajax({
+                url: 'https://d.apicloud.com/mcm/api/useroutlist?filter='+ params2,
+                method: 'get',
+                headers: {
+                  "X-APICloud-AppId": "A6075394048820",
+                  "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+                }
+              },function(ret, err){
+                  if (ret) {
+                      api.ajax({
+                        url: 'http://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+                        method: 'put',
+                        headers: {
+                            "X-APICloud-AppId": "A6075394048820",
+                            "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                            "Authorization": userInfo.id
+                        },
+                        data: {
+                          values: {
+                              "into_id": ret[0].id
+                          }
+                        }
+                      },function(ret, err){});
+                      alert("位于~"+ret[0].city+"~由~"+ret[0].user_name+"~发布的~"+ret[0].title+"~欢迎你的加入");
+                  }
+              });
+
+          }
+      });
+
+    });
+  }
+}
+
+</script>

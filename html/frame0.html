@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>首页</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/frame0.css"/>
+    <style>
+        .empty{ text-align: center; padding: 120px 0; }
+    </style>
+</head>
+<body>
+  <div id="app">
+      <dl v-for="(item,index) in dataList" :key="index" class="container" @click="fnOpenLfrasm(item);">
+          <dt class="image_box">
+            <img  v-if="item.url1"  :src="item.url1 | mapPic1" alt=""/>
+          </dt>
+          <dd class="right_box">
+            <div class="title_box">
+              {{item.title}}
+            </div>
+            <div class="content_box">
+              {{item.text}}
+            </div>
+            <div class="user_box">
+              <img :src="item.user_url" alt="" class="avatar_box"/>
+              <span>{{item.user_name}}</span>
+            </div>
+          </dd>
+      </dl>
+  </div>
+</body>
+<!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue"></script> -->
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/vue.min.js"></script>
+<script type="text/javascript" src="../script/SHA1.js"></script>
+<script type="text/javascript">
+    apiready = function(){
+
+      // 下拉刷新
+      api.setCustomRefreshHeaderInfo({
+          bgColor: '#C0C0C0',
+          isScale: true,
+      }, function() {
+          //下拉刷新被触发
+          fnRefreshF0();
+      });
+
+      api.addEventListener({
+          name: 'cancle_out_toREF'
+      }, function(ret, err){
+          fnRefreshF0();
+      });
+
+
+      var eventHub = new Vue();
+      // initEventListenner();
+      var app = new Vue({
+        el: '#app',
+        data: {
+          dataList:[],
+          aapi:null
+        },
+        methods:{
+
+          fnOpenLfrasm(item){
+            //打开详情frame
+            api.openWin({
+                name: 'outinfo',
+                url: './shouye/outinfo.html',
+                pageParam: {
+                    id: item.id,
+                    m_user_url: item.user_url,
+                }
+            });
+          },
+
+          //请求数据库方法（下拉调用次方法）
+          getServerList(){
+            var that = this;
+            var city_now = $api.getStorage('city');
+            var params = {
+                fields: {},
+                where: {
+                  city: city_now     //wherre city = city_now
+                },
+                skip: 0,             //每次从0开始
+                limit: 10            //每次限制10条数据
+            }
+            params = $api.jsonToStr(params);
+            api.ajax({
+                url: 'http://d.apicloud.com/mcm/api/useroutlist?filter=' + params,
+                method: 'get',
+                headers: {
+                  "X-APICloud-AppId": "A6075394048820",
+                  "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+                }
+            },function(ret, err){
+                if (ret) {
+                    // alert( JSON.stringify( ret ) );
+                    that.dataList = ret;
+                    api.refreshHeaderLoadDone();
+                } else {
+                    alert( "获取服务器类容失败，请检查网络连接" );
+                }
+            });
+          }
+        },
+
+        mounted(){
+          // 初始化，加载数据库
+          var that = this;
+          api.addEventListener({
+              name: 'cityfinish'
+          }, function(ret, err){
+            if( ret ){
+                that.getServerList();
+            }
+           });
+          this.getServerList();
+        },
+
+        //过滤器，过滤数据库中提取的 '\\'
+        filters:{
+          replaceStr(val){
+            return val.replace('\\','')
+          },
+          mapPic1(val){
+            var url1 = JSON.parse(val)
+            return url1.pic1
+          }
+        }
+      });
+
+      //刷新服务器数据
+      function fnRefreshF0(){
+        app.getServerList();
+      }
+    }
+
+</script>
+</html>

@@ -1,0 +1,627 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <link rel="stylesheet" type="text/css" href="../../css/shouye/UpUserOutInfo.css" />
+    <style type="text/css">
+        .aui-list .aui-list-item-media {
+            width: 3rem;
+        }
+        .notes-add {
+            position: fixed;
+            left: 0.5rem;
+            bottom: 0.5rem;
+            width: 3rem;
+            z-index: 99;
+        }
+        textarea {
+            height: 8rem;
+            background-color: #ffffff;
+            padding: 0.5rem;
+        }
+        #titlearea_user{
+          height: 2rem;
+          background-color: rgb(212, 238, 238);
+          padding: 0.5rem;
+        }
+        .photos img {
+            display: block;
+            width: 100%;
+        }
+        .add-photos > div {
+            width: 100%;
+            height:5.15rem;
+            line-height: 5.15rem;
+        }
+        .add-photos > div .aui-iconfont {
+            font-size: 2rem;
+            color: #ccc;
+        }
+
+        .add_none{
+          display: none;
+        }
+
+        .image-item {
+            position: relative;
+            height: 5.3rem;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+        .image-item img {
+            display: block;
+            margin: 0 auto;
+            width: auto;
+            height: 100%;
+        }
+        .image-item .delete-btn {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 28px;
+            height: 28px;
+            background-color: rgba(0,0,0,0.7);
+            margin-left: -14px;
+            margin-top: -14px;
+            color: #ffffff;
+            text-align: center;
+            border-radius: 50%;
+        }
+        .footer_btn{
+            text-align: center;
+        }
+        .footer_btn .btn_submit{
+            display: block;
+            width: 90%;
+            height: 2.5rem;
+            background: rgb(59,159,220);
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            margin: 0 auto;
+        }
+        .footer_btn .btn_submit:active{
+            border: 1px solid rgb(59,159,220);
+            background: #fff;
+            color: rgb(59,159,220);
+        }
+        .footer_btn .btn_cancle{
+            display: block;
+            width: 90%;
+            height: 2.5rem;
+            background: red;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            margin: 0 auto;
+            margin-top: 1rem;
+        }
+        .footer_btn .btn_cancle:active{
+            border: 1px solid red;
+            background: #fff;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <p class="aui-text-center aui-margin-t-15">发布内容</p>
+    <section class="aui-content-padded">
+        <textarea id="titlearea_user" placeholder="在这里输入标题..."></textarea>
+        <textarea id="textarea_user" placeholder="在这里输入内容..."></textarea>
+    </section>
+    <p class="aui-text-center aui-margin-t-15">美图更精彩</p>
+    <section class="aui-content-padded">
+        <div id="padded" class="aui-row aui-row-padded">
+          <!-- <div class="aui-col-xs-4 image-item">
+              <input type="hidden" >
+              <img src="../../image/demo1.png" class="notes-image">
+              <div class="delete-btn">
+                  <i class="aui-iconfont aui-icon-trash"></i>
+              </div>
+          </div> -->
+          <div id="add_l" class="aui-col-xs-4 add-photos" onclick="fnAddPhotos();" >
+                <div class="aui-border aui-text-center">
+                    <i class="aui-iconfont aui-icon-plus"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="aui-content-padded aui-clearfix">
+        <div class="aui-info">
+            <div class="aui-info-item aui-padded-r-10" style="width: 13rem">
+                <div>
+                    <i class="aui-iconfont aui-icon-location"></i>
+                    <span id="location" class="aui-ellipsis">北京市海淀区</span>
+                </div>
+            </div>
+            <div class="aui-info-item" style="width: 80px;" tapmode onclick="fncitySelect();">
+                <i class="aui-iconfont aui-icon-refresh aui-text-info aui-margin-r-5"></i>
+                <span class="aui-text-info">选择城市</span>
+            </div>
+        </div>
+    </section>
+    <section class="footer_btn">
+      <button class="btn_submit" tapmode onclick="fnSubmit();">提&nbsp;&nbsp;&nbsp;&nbsp; 交</botton>
+      <button class="btn_cancle" tapmode onclick="api.closeWin();">取&nbsp;&nbsp;&nbsp;&nbsp; 消</botton>
+    </section>
+</body>
+<script type="text/javascript" src="../../script/api.js"></script>
+<script type="text/javascript" src="../../script/SHA1.js"></script>
+<script type="text/javascript">
+apiready = function(){
+    fnSetSelectCity();
+    fngetuser_url();
+
+    api.addEventListener({
+        name: 'cityfinish2'
+    }, function(ret, err){
+        if( ret ){
+             fnSetSelectCity();
+        }
+    });
+};
+
+function fncitySelect() {
+  api.openFrame({
+      name: 'cityselect',
+      url: './cityselect.html',
+      rect: {
+          x: 0,
+          y: 0,
+          w: "auto",
+          h: "auto"
+      },
+      pageParam: {
+          from: 'UpUserOutInfo'
+      },
+      bounces: true,
+      bgColor: 'rgba(0,0,0,0.6)',
+      vScrollBarEnabled: true,
+      hScrollBarEnabled: true
+  });
+}
+
+//获取当前用户头像url
+function fngetuser_url(){
+  var userInfo = $api.getStorage('userInfo');
+  api.ajax({
+      url: 'http://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+      method: 'get',
+      headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+          "Authorization": userInfo.id
+      },
+  },function(ret, err){
+      $api.setStorage('user_avater_url', ret.avater_url);
+  });
+}
+
+//根据选择城市设置地点
+function fnSetSelectCity(){
+  var city_now = $api.getStorage('city');
+  var city_location = $api.byId('location');
+  if(city_now){
+    html = '<span id=\"location\" class=\"aui-ellipsis\">'+city_now+'</span>';
+    $api.html(city_location, html);
+  }else{
+    html = '<span id=\"location\" class=\"aui-ellipsis\">请选择城市</span>';
+    $api.html(city_location, html);
+  }
+}
+
+//添加新的图片
+var i=0;
+var pic = {pic1:null,pic2:null,pic3:null}
+var pic1 = {pic1:null,pic2:null,pic3:null}
+function fnAddPhotos(){
+    var padded =  $api.byId('padded');
+
+if(i<3){
+    api.actionSheet({
+        title: '选择',
+        cancelTitle: '取消',
+        buttons: ['相册']
+    }, function(ret, err){
+        if( ret.buttonIndex==1 ){
+
+            var UIMediaScanner = api.require('UIMediaScanner');
+              UIMediaScanner.open({
+                  type: 'picture',
+                  column: 4,
+                  classify: true,
+                  max: 3,
+                  sort: {
+                      key: 'time',
+                      order: 'desc'
+                  },
+                  texts: {
+                      stateText: '已选择*项',
+                      cancelText: '取消',
+                      finishText: '完成'
+                  },
+                  styles: {
+                      bg: '#fff',
+                      mark: {
+                          icon: '',
+                          position: 'bottom_left',
+                          size: 20
+                      },
+                      nav: {
+                          bg: '#eee',
+                          stateColor: '#000',
+                          stateSize: 18,
+                          cancelBg: 'rgba(0,0,0,0)',
+                          cancelColor: '#000',
+                          cancelSize: 18,
+                          finishBg: 'rgba(0,0,0,0)',
+                          finishColor: '#000',
+                          finishSize: 18
+                      }
+                  },
+                  scrollToBottom: {
+                      intervalTime: 3,
+                      anim: true
+                  },
+                  exchange: true,
+                  rotation: true
+              }, function(ret) {
+                  if (ret&&ret.eventType!='cancel') {
+                      // alert(JSON.stringify(ret));
+                      //判断选择的图片数
+                      var jsonLength = 0;
+                      for(var item in ret.list){
+                        jsonLength++;
+                      }
+                      var j=i+jsonLength;
+
+                      // 将图片url存放and设置缩略图
+                      if(j>3){
+                        alert("最多只能选3张图片");
+                      }else{
+                        if(jsonLength==3){
+                          pic.pic1 = ret.list[0].path;
+                          pic.pic2 = ret.list[1].path;
+                          pic.pic3 = ret.list[2].path;
+                          $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                              +'<input type=\"hidden\" >'
+                              +'<img src=\"'+ret.list[0].thumbPath+'\" class=\"notes-image\">'
+                              +'<div class=\"delete-btn\">'
+                                  +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                              +'</div></div>');
+                          $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                              +'<input type=\"hidden\" >'
+                              +'<img src=\"'+ret.list[1].thumbPath+'\" class=\"notes-image\">'
+                              +'<div class=\"delete-btn\">'
+                                  +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                              +'</div></div>');
+                          $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                              +'<input type=\"hidden\" >'
+                              +'<img src=\"'+ret.list[2].thumbPath+'\" class=\"notes-image\">'
+                              +'<div class=\"delete-btn\">'
+                                  +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                              +'</div></div>');
+                          i=3;
+                        }
+                        else if(jsonLength==1){
+                          if(pic.pic1==null){
+                            pic.pic1 = ret.list[0].path;
+                            $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                                +'<input type=\"hidden\" >'
+                                +'<img src=\"'+ret.list[0].thumbPath+'\" class=\"notes-image\">'
+                                +'<div class=\"delete-btn\">'
+                                    +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                                +'</div></div>');
+                            i=1;
+                          }else if(pic.pic1!=null&&pic.pic2==null){
+                            pic.pic2 = ret.list[0].path;
+                            $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                                +'<input type=\"hidden\" >'
+                                +'<img src=\"'+ret.list[0].thumbPath+'\" class=\"notes-image\">'
+                                +'<div class=\"delete-btn\">'
+                                    +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                                +'</div></div>');
+                            i=2;
+                          }else if(pic.pic1!=null&&pic.pic2!=null&&pic.pic3==null){
+                            pic.pic3 = ret.list[0].path;
+                            $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                                +'<input type=\"hidden\" >'
+                                +'<img src=\"'+ret.list[0].thumbPath+'\" class=\"notes-image\">'
+                                +'<div class=\"delete-btn\">'
+                                    +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                                +'</div></div>');
+                            i=3;
+                          }
+                        }
+                        else if(jsonLength==2){
+                          if(pic.pic1==null&&pic.pic2==null){
+                            pic.pic1 = ret.list[0].path;
+                            pic.pic2 = ret.list[1].path;
+                            $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                                +'<input type=\"hidden\" >'
+                                +'<img src=\"'+ret.list[0].thumbPath+'\" class=\"notes-image\">'
+                                +'<div class=\"delete-btn\">'
+                                    +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                                +'</div></div>');
+                            $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                                +'<input type=\"hidden\" >'
+                                +'<img src=\"'+ret.list[1].thumbPath+'\" class=\"notes-image\">'
+                                +'<div class=\"delete-btn\">'
+                                    +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                                +'</div></div>');
+                            i=2;
+                          }else if (pic.pic1!=null&&pic.pic2==null&&pic.pic3==null) {
+                            pic.pic2 = ret.list[0].path;
+                            pic.pic3 = ret.list[1].path;
+                            $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                                +'<input type=\"hidden\" >'
+                                +'<img src=\"'+ret.list[0].thumbPath+'\" class=\"notes-image\">'
+                                +'<div class=\"delete-btn\">'
+                                    +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                                +'</div></div>');
+                            $api.prepend(padded, '<div class=\"aui-col-xs-4 image-item\">'
+                                +'<input type=\"hidden\" >'
+                                +'<img src=\"'+ret.list[1].thumbPath+'\" class=\"notes-image\">'
+                                +'<div class=\"delete-btn\">'
+                                    +'<i class=\"aui-iconfont aui-icon-trash\" onclick="fnRmPic( this );"></i>'
+                                +'</div></div>');
+                            i=3;
+                          }
+                        }
+                      }
+                      //当图片打到最大数时， add_pic 隐藏
+                      if(i>=3){
+                        var add_l = $api.byId('add_l');
+                        $api.addCls(add_l,'add_none');
+                      }
+                  }
+              });
+        }
+    });
+}
+}
+
+//删除当前图片
+function fnRmPic(tag){
+
+    var a = $api.domAll('.image-item');
+    for(var j = 0; j < a.length; j++){
+       if(a[j].index==null){
+         a[j].indexs = j;
+       }
+    }
+    //获取父级元素index并删除
+    var fa = $api.closest(tag, '.image-item');
+    $api.remove(fa);
+    i--;
+
+    //判断删除的图片并修改 picurl
+    if(fa.indexs==0){
+      if(pic.pic3 && pic.pic2 && pic.pic1){
+        pic.pic3 = null;
+      }else if(pic.pic2 && pic.pic1){
+        pic.pic2 = null;
+      }else if(pic.pic1){
+        pic.pic1 = null;
+      }
+    }
+    if(fa.indexs==1) {
+      if(pic.pic3 && pic.pic2 && pic.pic1){
+        pic.pic2 = pic.pic3;
+        pic.pic3 = null;
+      }else if(pic.pic2 && pic.pic1){
+        pic.pic1 = pic.pic2;
+        pic.pic2 = null;
+      }
+    }
+    if(fa.indexs==2) {
+      if(pic.pic3 && pic.pic2 && pic.pic1){
+        pic.pic1 = pic.pic2;
+        pic.pic2 = pic.pic3;
+        pic.pic3 = null;
+      }
+    }
+
+    //当图片小于最大数时，add_pic 显示
+    if(i<3){
+      var add_l = $api.byId('add_l');
+      $api.removeCls(add_l, 'add_none');
+    }
+}
+
+//提交按钮触发函数
+function fnSubmit(){
+  var textarea_user = $api.byId('textarea_user');
+  var text_con = textarea_user.value;
+  var titlearea_user = $api.byId('titlearea_user');
+  var title_con = titlearea_user.value;
+  var city_now = $api.getStorage('city');
+  var userInfo = $api.getStorage('userInfo');
+  //获取当前用户信息判断施法已经发布出游
+  api.ajax({
+    url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+    method: 'get',
+    headers: {
+        "X-APICloud-AppId": "A6075394048820",
+        "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+        "Authorization": userInfo.id
+    }
+  },function(ret, err){
+      if(ret.creat_id!=""){
+        alert("您已经发布了一条出游信息哦");
+      }else if(ret.creat_id==""){
+        //没有发布出游信息开始字符限制判断
+        if(textarea_user.value.length>250){
+          alert("输入内容必须小于250")
+          return
+        }
+        if(titlearea_user.value.length>20){
+          alert("标题必须小于20")
+          return
+        }
+        //获取textarea的输入内容
+        if(!text_con || pic.pic1=="" || !city_now || !title_con){
+          alert("请输入详情类容和地址并且含有一张图片哦~~~~~~~");
+        }else{
+          //字符限制判断通过进行发布
+          fuGetUpUser_outToServer();
+        }
+      }
+  });
+}
+
+
+var lod_id;
+//将发布信息上传
+function fuGetUpUser_outToServer(){
+  //将数据上传到服务器图片库
+
+  var UILoading = api.require('UILoading');
+  UILoading.flower({
+      size: 30,
+      fixed: true
+  }, function(ret) {
+      lod_id=ret.id;
+  });
+
+  fnPostUpUser_outPicToServer(pic.pic1,pic.pic2,pic.pic3);
+}
+
+function fnPostUpUser_outPicToServer(url1,url2,url3){
+  api.ajax({
+      url: 'http://d.apicloud.com/mcm/api/file',
+      method: 'post',
+      headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+      },
+      data: {
+          files: {
+              file: url1
+          }
+      }
+  },function(ret, err){
+    pic1.pic1=ret.url;
+    api.ajax({
+        url: 'http://d.apicloud.com/mcm/api/file',
+        method: 'post',
+        headers: {
+            "X-APICloud-AppId": "A6075394048820",
+            "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+        },
+        data: {
+            files: {
+                file: url2
+            }
+        }
+    },function(ret, err){
+      pic1.pic2=ret.url;
+      // alert(pic1.pic2);
+      api.ajax({
+          url: 'http://d.apicloud.com/mcm/api/file',
+          method: 'post',
+          headers: {
+              "X-APICloud-AppId": "A6075394048820",
+              "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+          },
+          data: {
+              files: {
+                  file: url3
+              }
+          }
+      },function(ret, err){
+        pic1.pic3=ret.url;
+        // 调用方法更新数据库的出行表单
+        var textarea_user = $api.byId('textarea_user');
+        var text_con = textarea_user.value;
+
+        var titlearea_user = $api.byId('titlearea_user');
+        var title_con = titlearea_user.value;
+        fnPostUpUser_outMisToServer(text_con,title_con);
+      });
+    });
+  });
+}
+
+//更新数据库的出行表单
+function fnPostUpUser_outMisToServer(text,title){
+
+  var city_now = $api.getStorage('city');
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  var user_avater_url = $api.getStorage('user_avater_url');
+  var into_data = [];
+  var j = {};
+  j.name = username;
+  into_data.push(j);
+  api.ajax({
+      url: 'http://d.apicloud.com/mcm/api/useroutlist',
+      method: 'put',
+      headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+          "Authorization": userInfo.id
+      },
+      data: {
+          values: {
+              'm_userid': userInfo.userId,
+              'city': city_now,
+              'title': title,
+              'text': text,
+              'user_name': username,
+              'url1': pic1,
+              'user_url': user_avater_url,
+              'into_user': into_data,
+              'into_usernum': "1"
+          },
+      }
+  },function(ret, err){
+    // 跟新用户表发布项
+    api.ajax({
+        url: 'http://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+        method: 'put',
+        headers: {
+            "X-APICloud-AppId": "A6075394048820",
+            "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+            "Authorization": userInfo.id
+        },
+        data: {
+          values: {
+              "creat_id": ret.id
+          }
+        }
+    },function(ret, err){
+      if(ret){
+        alert("发布成功");
+        //$api.setStorage('userInfo', ret);
+        api.closeWin({
+            tag: 'scss'
+        });
+        api.sendEvent({
+          name: 'cityfinish',
+          extra: {
+            key1: 'finish',
+          }
+        });
+      }else{
+        alert("发布失败")
+      }
+
+      //上传结束，关闭loading
+        var UILoading = api.require('UILoading');
+        UILoading.closeFlower({
+            id: lod_id
+        });
+    });
+
+  });
+}
+
+</script>
+</html>

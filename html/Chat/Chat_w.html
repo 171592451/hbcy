@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+		<link rel="stylesheet" type="text/css" href="../../css/aui.css" />
+		<style type="text/css">
+			#tx {
+				border-radius: 50%;
+				width: 30px;
+				height: 30px;
+				display: inline;
+				position: absolute;
+				top: 7px;
+				left: 3px;
+			}
+		</style>
+	</head>
+	<body>
+		<header class="aui-bar aui-bar-nav" id="head">
+			<a class="aui-btn aui-pull-left" tapmode onclick="closeWin()"> <span class="aui-iconfont aui-icon-left"></span> </a>
+			<div class="aui-title">
+				<img  id="tx"/> 李宇春
+			</div>
+		</header>
+	</body>
+	<script type="text/javascript" src="../../script/api.js"></script>
+  <script type="text/javascript" src="../../script/SHA1.js"></script>
+	<script type="text/javascript">
+		apiready = function() {
+			api.parseTapmode();
+			var html = '';
+			var ava_url = api.pageParam.tx;
+			var name = api.pageParam.zh;
+      var u_id ;
+			html += '<img src="' + api.pageParam.tx + '" id="tx"/>' + api.pageParam.zh;
+			$api.html($api.dom('.aui-title'), html);
+			$api.fixStatusBar($api.byId('head'));
+			var head_h = $api.offset($api.byId('head')).h;
+      var params = {
+          fields: {},
+          where: {
+            username: name,
+          },
+          skip: 0,
+          limit: 1
+      }
+      params = $api.jsonToStr(params);
+      api.ajax({
+          url: 'https://d.apicloud.com/mcm/api/user?filter='+ params,
+          method: 'get',
+          headers: {
+            "X-APICloud-AppId": "A6075394048820",
+            "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+          }
+      },function(ret, err){
+          if (ret) {
+              var u_id = ret[0].id;
+              // alert(u_id+"|"+ava_url+"|"+name);
+              api.openFrame({
+                name : 'frame_chat',
+                url : 'frame_chat.html',
+                bgColor : 'f5f5f5',
+                rect : {
+                  x : 0,
+                  y : head_h,
+                  w : 'auto',
+                  h : api.winHeight - head_h - 52
+                },
+                hScrollBarEnabled : false,
+                vScrollBarEnabled : false,
+                pageParam : {
+                  head_h : head_h,
+                  id : u_id,
+                  name : name,
+                  ava_url : ava_url
+                }
+              });
+          }
+      });
+
+
+
+		};
+		function closeWin() {
+			api.closeWin({
+			});
+		}
+	</script>
+</html>

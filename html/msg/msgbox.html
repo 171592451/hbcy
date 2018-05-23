@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+      <title>title</title>
+      <link rel="stylesheet" type="text/css" href="../../css/api.css"/>
+      <style>
+          body{
+
+          }
+      </style>
+  </head>
+  <body>
+
+  </body>
+  <script type="text/javascript" src="../../script/api.js"></script>
+  <script type="text/javascript" src="../../script/SHA1.js"></script>
+  <script type="text/javascript">
+      apiready = function(){
+        fnSetMsgbox();
+      };
+
+
+      function replacejson(val) {
+        val.replace('\\','')
+        var url1 = JSON.parse(val)
+        return url1
+      }
+
+      function fnSetMsgbox() {
+        // 获取当前用户消息列表
+        var ret_msg = [];
+        var userInfo = $api.getStorage('userInfo');
+        if(userInfo){
+          var params = {
+              fields: {
+                  createdAt: false,
+                  updatedAt: false
+              },
+              where: {
+                end_id: userInfo.userId,
+                status: 0,
+              },
+              skip: 0,
+              limit: 998
+          }
+          params = $api.jsonToStr(params);
+          api.ajax({
+              url: 'https://d.apicloud.com/mcm/api/msg?filter='+ params,
+              method: 'get',
+              headers: {
+                "X-APICloud-AppId": "A6075394048820",
+                "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+              }
+          },function(ret, err){
+            // alert( JSON.stringify( ret )+userInfo.userId );
+            if (ret!="") {
+              ret_msg = ret;
+              // alert(JSON.stringify(ret_msg));
+              var msg_data = [];
+              // 调用组件进行布局
+              for (var i = 0; i < ret.length; i++) {
+                  var j = {};
+                  j.uid = i;
+                  j.imgPath = 'http://a5d59c372b37f8a4424b.test.upcdn.net/apicloud/c7c61a9d1925f78b4cbdfc8e43979ec6.png';
+                  j.title = "请求加入";
+                  j.subTitle = ret[i].start_name+"~~请求加入您的出行";
+                  j.remark = "未处理";
+                  msg_data.push(j);
+              }
+              var UIListView = api.require('UIListView');
+              UIListView.open({
+                  rect: {
+                      x: 0,
+                      y: 0,
+                      w: api.winWidth,
+                      h: api.frameHeight
+                  },
+                  data: msg_data,
+                  rightBtns: [{
+                      bgColor: '#E74C3C',
+                      activeBgColor: '',
+                      width: 90,
+                      title: '拒绝',
+                      titleSize: 16,
+                      titleColor: '#fff',
+                      icon: '',
+                      iconWidth: 20
+                  }],
+                  styles: {
+                      borderColor: '#696969',
+                      item: {
+                          bgColor: '#fff',
+                          activeBgColor: '#F5F5F5',
+                          height: 80.0,
+                          imgWidth: 75,
+                          imgHeight: 75,
+                          imgCorner: 0,
+                          placeholderImg: '',
+                          titleSize: 14.0,
+                          titleColor: '#000',
+                          subTitleSize: 12.0,
+                          subTitleColor: '#000',
+                          remarkColor: "rgb(224,108,106)",
+                          remarkSize: 16,
+                          remarkIconWidth: 30
+                      }
+                  },
+                  fixedOn: api.frameName,
+                  showScrollBar: true
+              }, function(ret, err) {
+                // 根据点击进行下一步操作同意加入OR不同意
+                  fnChoiceMsg(ret,ret_msg);
+              });
+
+            }
+            else {
+              alert("没有未处理的消息")
+              api.closeWin({
+                  name: 'msgbox',
+              });
+
+            }
+          })
+        }
+      }
+
+      function fnChoiceMsg(ret,ret_msg) {
+        var userInfo = $api.getStorage('userInfo');
+        for(var i = 0; i < ret_msg.length; i++){
+          if(ret.eventType=="clickContent"&&ret.index==i){
+            // 同意加入
+            var u = i;
+            api.confirm({
+                title: '又有新小伙伴了呢',
+                msg: '是否确认同意加入',
+                buttons: ['确定', '取消']
+            }, function(ret, err){
+                if(ret.buttonIndex==1){
+                  //打开loading
+                  var UILoading = api.require('UILoading');
+                  UILoading.flower({
+                      size: 30,
+                      fixed: true
+                  }, function(ret) {
+                      lod_id=ret.id;
+                  });
+                    //  alert( JSON.stringify( ret )+"123" );
+                    // 判断用户是否已经加入其它出游
+                    var params2 = {
+                        fields: {},
+                        where: {
+                          start_name: ret_msg[u].start_name,
+                          status: 1
+                        },
+                        skip: 0,
+                        limit: 1
+                    }
+                    params2 = $api.jsonToStr(params2);
+                    api.ajax({
+                      url: 'https://d.apicloud.com/mcm/api/msg?filter='+params2,
+                      method: 'get',
+                      headers: {
+                          "X-APICloud-AppId": "A6075394048820",
+                          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                      },
+                    },function(ret, err){
+                      // 该用户还未加入其它出游 同意并加入
+                        if (ret=="") {
+                          var params = {
+                              fields: {},
+                              where: {
+                                m_userid: userInfo.userId
+                              },
+                              skip: 0,
+                              limit: 1
+                          }
+                          params = $api.jsonToStr(params);
+                          api.ajax({
+                              url: 'https://d.apicloud.com/mcm/api/useroutlist?filter='+params,
+                              method: 'get',
+                              headers: {
+                                  "X-APICloud-AppId": "A6075394048820",
+                                  "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                              },
+                          },function(ret, err){
+                              if (ret) {
+                                  var a = replacejson(ret[0].into_user );
+                                 // alert(parseInt(ret[0].into_usernum));
+                                 //  alert( JSON.stringify( a ));
+                                 //  alert( JSON.stringify( a[0].user_avater_url ));
+                                 //  alert( JSON.stringify( ret_msg[u].start_name ) );
+                                 //  alert( JSON.stringify( ret_msg[u].start_url ) );
+                                  var num = parseInt(ret[0].into_usernum)+1;
+                                  var userInfo = $api.getStorage('userInfo');
+                                  var data = replacejson(ret[0].into_user);
+                                  var into_data = [];
+                                  var j = {};
+                                  j.name = ret_msg[u].start_name;
+                                  data.push(j);
+                                 //  alert(JSON.stringify(data));
+                                  api.ajax({
+                                    url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+                                    method: 'get',
+                                    headers: {
+                                        "X-APICloud-AppId": "A6075394048820",
+                                        "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                        "Authorization": userInfo.id
+                                    }
+                                  },function(ret, err){
+                                      if (ret.creat_id) {
+                                           api.ajax({
+                                               url: 'http://d.apicloud.com/mcm/api/useroutlist/'+ret.creat_id,
+                                               method: 'put',
+                                               headers: {
+                                                   "X-APICloud-AppId": "A6075394048820",
+                                                   "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                                   "Authorization": userInfo.id
+                                               },
+                                              data: {
+                                                values: {
+                                                    'into_user': data,
+                                                    'into_usernum':num
+                                                },
+                                               }
+                                           },function(ret, err){
+                                               if (ret) {
+                                                   // alert( JSON.stringify( ret ) );
+                                                   var params1 = {
+                                                       fields: {},
+                                                       where: {
+                                                         end_id: ret.m_userid,
+                                                         start_name: j.name,
+                                                         status: 0
+                                                       },
+                                                       skip: 0,
+                                                       limit: 1
+                                                   }
+                                                   params1 = $api.jsonToStr(params1);
+                                                   api.ajax({
+                                                     url: 'https://d.apicloud.com/mcm/api/msg?filter='+params1,
+                                                     method: 'get',
+                                                     headers: {
+                                                         "X-APICloud-AppId": "A6075394048820",
+                                                         "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                                     },
+                                                   },function(ret, err){
+                                                       if (ret) {
+                                                           api.ajax({
+                                                               url: 'https://d.apicloud.com/mcm/api/msg/'+ret[0].id,
+                                                               method: 'put',
+                                                               headers: {
+                                                                   "X-APICloud-AppId": "A6075394048820",
+                                                                   "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                                                   "Authorization": userInfo.id
+                                                               },
+                                                               data: {
+                                                                values: {
+                                                                    'status': "1",
+                                                                },
+                                                               }
+                                                           },function(ret, err){
+                                                               if (ret) {
+                                                                //  关闭loading
+                                                                   var UILoading = api.require('UILoading');
+                                                                   UILoading.closeFlower({
+                                                                       id: lod_id
+                                                                   });
+                                                                   fnSetMsgbox();
+                                                               }
+                                                           });
+
+                                                       }
+                                                   });
+
+                                               }
+                                           });
+                                      }
+                                  });
+                              }
+                          });
+                        } else {
+                          //  关闭loading
+                            var UILoading = api.require('UILoading');
+                            UILoading.closeFlower({
+                                id: lod_id
+                            });
+                            alert( "该用户已加入其它出游，小手不够快哦" );
+                            // 删除操作
+                            var params4 = {
+                                fields: {},
+                                where: {
+                                  start_name: ret_msg[u].start_name,
+                                  status: 0,
+                                  end_id:userInfo.userId,
+                                },
+                                skip: 0,
+                                limit: 1
+                            }
+                            params4 = $api.jsonToStr(params4);
+                            api.ajax({
+                                url: 'https://d.apicloud.com/mcm/api/msg?filter='+ params4,
+                                method: 'get',
+                                headers: {
+                                  "X-APICloud-AppId": "A6075394048820",
+                                  "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+                                }
+                            },function(ret, err){
+                                if (ret) {
+                                    // 删除MSG的申请消息
+                                    api.ajax({
+                                      url: 'https://d.apicloud.com/mcm/api/msg/'+ret[0].id,
+                                      method: 'DELETE',
+                                      headers: {
+                                          "X-APICloud-AppId": "A6075394048820",
+                                          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                          "Authorization": userInfo.id
+                                      }
+                                    },function(ret, err){
+                                        if (ret) {
+                                          //消息已删除重新初始化msgbox
+                                            fnSetMsgbox();
+                                        }
+                                    });
+
+                                }
+                            });
+                        }
+                    });
+
+
+
+
+
+                }
+            });
+          }
+          if(ret.eventType=="clickRightBtn"&&ret.index==i){
+            // 取消，不同意加入
+            var o = i;
+            var params3 = {
+                fields: {},
+                where: {
+                  start_name: ret_msg[o].start_name,
+                  status: 0,
+                  end_id:userInfo.userId,
+                },
+                skip: 0,
+                limit: 1
+            }
+            params3 = $api.jsonToStr(params3);
+            api.ajax({
+                url: 'https://d.apicloud.com/mcm/api/msg?filter='+ params3,
+                method: 'get',
+                headers: {
+                  "X-APICloud-AppId": "A6075394048820",
+                  "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+                }
+            },function(ret, err){
+                if (ret) {
+                    // 删除MSG的申请消息
+                    api.ajax({
+                      url: 'https://d.apicloud.com/mcm/api/msg/'+ret[0].id,
+                      method: 'DELETE',
+                      headers: {
+                          "X-APICloud-AppId": "A6075394048820",
+                          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F6B73F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                          "Authorization": userInfo.id
+                      }
+                    },function(ret, err){
+                        if (ret) {
+                          //消息已删除重新初始化msgbox
+                            fnSetMsgbox();
+                            alert( "已拒绝" );
+                        }
+                    });
+
+                }
+            });
+
+          }
+        }
+      }
+  </script>
+  </html>

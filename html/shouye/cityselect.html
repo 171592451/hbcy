@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+      <title>title</title>
+      <link rel="stylesheet" type="text/css" href="../../css/api.css"/>
+      <link rel="stylesheet" type="text/css" href="../../css/shouye/cityselect.css"/>
+      <style>
+      html,body{
+              background-color: transparent !important;
+      }
+      </style>
+  </head>
+  <body>
+      <header>
+          <div class="title">选择所需服务的地区</div>
+      </header>
+      <section id="list">
+
+      </section>
+  </body>
+  <script type="text/javascript" src="../../script/api.js"></script>
+  <script type="text/javascript" src="../../script/SHA1.js"></script>
+  <script type="text/javascript">
+      apiready = function(){
+          fnGetCityList();
+      };
+
+      var cityList;
+      function fnGetCityList() {
+          var params = {
+              fields: {
+                  createdAt: false,
+                  updatedAt: false
+              },
+              where: {},
+              skip: 0,
+              limit: 50
+          }
+          params = $api.jsonToStr(params);
+          api.ajax({
+              url: 'http://d.apicloud.com/mcm/api/city?filter=' + params,
+              method: 'get',
+              headers: {
+                "X-APICloud-AppId": "A6075394048820",
+                "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+              }
+          }, function(ret, err) {
+              if (ret) {
+                  //console.log($api.jsonToStr(ret));
+                  cityList = ret;
+                  fnUpdateCityList(ret);
+              } else {
+                  alert("获取城市信息失败,请检查网络");
+              }
+          });
+      }
+
+      function fnUpdateCityList(data_) {
+          var list = $api.byId('list');
+          var html = '';
+          for (var i = 0; i < data_.length; i++) {
+              if (data_[i].name) {
+                  html += '<div class="city" tapmode onclick="fnSelectCity(' + i + ');">' + data_[i].name + '</div>';
+              }
+          }
+          $api.html(list, html);
+      }
+
+      function fnSelectCity(index_) {
+          // alert(cityList[index_].name);
+          $api.setStorage('city',cityList[index_].name);
+          api.closeFrame({
+              name: 'cityselect'
+          });
+          //根据不同的打开方式判断，并发送一个消息表示完成城市选择
+          if(api.pageParam.from=="main"){
+            api.sendEvent({
+              name: 'cityfinish',
+              extra: {
+                key1: 'finish',
+              }
+            });
+          }
+          if(api.pageParam.from=="UpUserOutInfo"){
+            api.sendEvent({
+              name: 'cityfinish2',
+              extra: {
+                key1: 'finish',
+              }
+            });
+          }
+
+      }
+  </script>
+  </html>

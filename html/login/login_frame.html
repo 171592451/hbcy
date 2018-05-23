@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>登录Frame</title>
+    <link rel="stylesheet" type="text/css" href="../../css/api.css"/>
+    <style>
+    body {
+        text-align: center;
+    }
+
+    .row {
+        width: auto;
+        height: 70px;
+        box-sizing: border-box;
+        margin-left: 32px;
+        margin-right: 32px;
+        padding-top: 40px;
+        border-bottom: 1px solid #888;
+    }
+
+    .input {
+        width: 100%;
+        height: 20px;
+        border: none;
+        outline: none;
+        font-size: 16px;
+        line-height: 20px;
+    }
+
+    .btn {
+        width: auto;
+        height: 50px;
+        margin-left: 32px;
+        margin-right: 32px;
+        margin-top: 32px;
+        background-color: rgb(59,159,220);
+        line-height: 50px;
+        color: #fff;
+        font-size: 24px;
+        text-align: center;
+        border-radius: 8px;
+    }
+
+    .btn-third-party {
+        display: inline-block;
+        width: auto;
+        height: 50px;
+        box-sizing: border-box;
+        margin-top: 32px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 8px 8px 8px 36px;
+        font-size: 20px;
+        color: #888;
+        line-height: 32px;
+        text-align: left;
+        border: 1px solid #aaa;
+        background-image: url(../../image/share_friend.png);
+        background-repeat: no-repeat;
+        background-size: auto 20px;
+        background-position: 8px center;
+        border-radius: 8px;
+    }
+
+    .highlight {
+        opacity: 0.7;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="row">
+        <input id="username" class="input" type="text" placeholder="用户名">
+    </div>
+    <div class="row">
+        <input id="password" class="input" type="password" placeholder="密码">
+    </div>
+    <div class="btn" tapmode="highlight" onclick="fnLogin();">登录</div>
+    <!-- <div class="btn-third-party">使用微信登录</div> -->
+</body>
+<script type="text/javascript" src="../../script/api.js"></script>
+<script type="text/javascript" src="../../script/SHA1.js"></script>
+<script type="text/javascript">
+apiready = function() {
+    fnInitUIInput();
+};
+
+var UIInput;
+var usernameUIInputId;
+var passwordUIInputId;
+var usernameValue;
+var passwordValue;
+
+// 输入框处理
+function fnInitUIInput() {
+    // 用户名输入框模块
+    var username = $api.byId('username');
+    var usernameRect = $api.offset(username);
+    UIInput = api.require('UIInput');
+    UIInput.open({
+        rect: {
+            x: usernameRect.l,
+            y: usernameRect.t,
+            w: usernameRect.w,
+            h: usernameRect.h
+        },
+        styles: {
+            bgColor: '#fff',
+            size: 16,
+            color: '#000',
+            placeholder: {
+                color: '#ccc'
+            }
+        },
+        autoFocus: false,
+        maxRows: 1,
+        maxStringLength: 20,
+        placeholder: '用户名',
+        keyboardType: 'default',
+        fixedOn: api.frameName
+    }, function(ret, err) {
+        if (ret) {
+            usernameUIInputId = ret.id;
+            if (ret && ret.eventType == "show") {
+                setTimeout(function() {
+                    UIInput.popupKeyboard({
+                        id: usernameUIInputId
+                    });
+                }, 100);
+            } else if (ret.eventType == "change") {
+                UIInput.value({
+                    id: usernameUIInputId
+                }, function(ret, err) {
+                    if (ret) {
+                        if (ret.status) {
+                            usernameValue = ret.msg;
+                        }
+                    }
+                });
+            }
+        }
+    });
+
+    // 密码输入框模块
+    var password = $api.byId('password');
+    var passwordRect = $api.offset(password);
+    UIInput.open({
+        rect: {
+            x: passwordRect.l,
+            y: passwordRect.t,
+            w: passwordRect.w,
+            h: passwordRect.h
+        },
+        styles: {
+            bgColor: '#fff',
+            size: 16,
+            color: '#000',
+            placeholder: {
+                color: '#ccc'
+            }
+        },
+        autoFocus: false,
+        maxRows: 1,
+        maxStringLength: 20,
+        placeholder: '密码',
+        keyboardType: 'default',
+        inputType: 'password',
+        fixedOn: api.frameName
+    }, function(ret, err) {
+        if (ret) {
+            passwordUIInputId = ret.id;
+            if (ret.eventType == "change") {
+                UIInput.value({
+                    id: passwordUIInputId
+                }, function(ret, err) {
+                    if (ret) {
+                        if (ret.status) {
+                            passwordValue = ret.msg;
+                        }
+                    }
+                });
+            }
+        }
+    });
+}
+
+// 登录
+function fnLogin() {
+    // 如果有未输入，转到输入框并弹出键盘
+    if (!usernameValue) {
+        if (api.systemType == 'android') {
+            setTimeout(function() {
+                UIInput.popupKeyboard({
+                    id: usernameUIInputId
+                });
+            }, 100);
+        } else {
+            UIInput.popupKeyboard({
+                id: usernameUIInputId
+            });
+        }
+        return;
+    }
+    if (!passwordValue) {
+        if (api.systemType == 'android') {
+            setTimeout(function() {
+                UIInput.popupKeyboard({
+                    id: passwordUIInputId
+                });
+            }, 100);
+        } else {
+            UIInput.popupKeyboard({
+                id: passwordUIInputId
+            });
+        }
+        return;
+    }
+    //判断输入是否包含汉字
+    if(/.*[\u4e00-\u9fa5]+.*$/.test(passwordValue)||/.*[\u4e00-\u9fa5]+.*$/.test(usernameValue)){
+      alert("请规范输入，用户名密码不能包含汉字");
+    }
+    else{
+      //打开loading
+      var UILoading = api.require('UILoading');
+      UILoading.flower({
+          size: 30,
+          fixed: true
+      }, function(ret) {
+          lod_id=ret.id;
+      });
+      api.ajax({
+          url: 'http://d.apicloud.com/mcm/api/user/login',
+          method: 'post',
+          headers: {
+              "X-APICloud-AppId": "A6075394048820",
+              "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+          },
+          data: {
+              values: {
+                  "username": usernameValue,
+                  "password": passwordValue
+              }
+          }
+      }, function(ret, err) {
+          if (ret) {
+              // 保存用户信息
+
+              $api.setStorage('userInfo', ret);
+              $api.setStorage('username', usernameValue);
+              api.ajax({
+                url: 'https://d.apicloud.com/mcm/api/user/'+ret.userId,
+                method: 'get',
+                headers: {
+                    "X-APICloud-AppId": "A6075394048820",
+                    "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                    "Authorization": ret.id
+                }
+              },function(ret, err){
+                  if (ret) {
+                      // alert( JSON.stringify( ret ) );
+                      var userId = ret.id;       //用户id
+                      var name = usernameValue;  //用户name
+                      var portraitUri = ret.avater_url;  //用户头像
+                      var appKey = "bmdehs6pbrnzs";
+                      var appSecret = "FEZvNXT1C9Z";
+                      var nonce = Math.floor(Math.random() * 1000000);//随机数
+                      var timestamp = Date.now(); //时间戳
+                      var signature = SHA1("" + appSecret + nonce + timestamp);//数据签名(通过哈希加密计算)
+                      api.ajax({
+                          url: 'http://api.cn.ronghub.com/user/getToken.json',
+                          method: 'post',
+                          headers : {
+                               "RC-App-Key" : appKey,
+                               "RC-Nonce" : "" + nonce,
+                               "RC-Timestamp" : "" + timestamp,
+                               "RC-Signature" : "" + signature,
+                               "Content-Type" : "application/x-www-form-urlencoded"
+                          },
+                          data : {
+                                values : {
+                                        userId : userId,
+                                        name : name,
+                                        portraitUri : portraitUri
+                                }
+                          }
+                      },function(ret, err){
+                          if (ret) {
+
+                              $api.setStorage('token', ret.token);
+                              // $api.setStorage('avater_url_L', ret.portraitUri);
+                              var userInfo = $api.getStorage('userInfo');
+                              api.ajax({
+                                  url: 'http://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+                                  method: 'put',
+                                  headers: {
+                                      "X-APICloud-AppId": "A6075394048820",
+                                      "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                      "Authorization": userInfo.id
+                                  },
+                                  data: {
+                                    values: {
+                                        "token_x": ret.token,
+                                    }
+                                  }
+                              },function(ret, err){
+                                  if (ret) {
+                                    $api.setStorage('avater_url_L', ret.avater_url);
+                                    //  关闭loading
+                                       var UILoading = api.require('UILoading');
+                                       UILoading.closeFlower({
+                                           id: lod_id
+                                       });
+                                    api.alert({
+                                        title: '提示',
+                                        msg: '登录成功',
+                                    }, function(ret, err) {
+                                        if (ret) {
+                                          //发送完成登陆消息
+                                          api.sendEvent({
+                                              name: 'finishlogin',
+                                              extra: {
+                                                  key1: 'finish'
+                                              }
+                                          });
+                                          api.closeWin();
+                                        }
+                                    });
+                                  }
+                              });
+                          }
+                      });
+                  }
+              });
+
+          } else {
+            //  关闭loading
+               var UILoading = api.require('UILoading');
+               UILoading.closeFlower({
+                   id: lod_id
+               });
+              api.toast({
+                  msg: '登录失败，用户名或密码错误',
+                  duration: 2000,
+                  location: 'middle'
+              });
+          }
+      });
+    }
+}
+
+</script>
+
+</html>

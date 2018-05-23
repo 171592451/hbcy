@@ -1,0 +1,555 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="../css/frame2.css" />
+    <style type="text/css">
+        .text-white {
+            color: #ffffff !important;
+        }
+
+        .aui-grid [class*=aui-col-] {
+            padding: 0.75rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 顶部 -->
+    <section class="aui-content" id="user-info" tapmode onclick="OrTodologin();">
+        <div class="aui-list aui-media-list aui-list-noborder aui-bg-info">
+            <div class="aui-list-item aui-list-item-middle">
+                <div class="aui-media-list-item-inner ">
+                    <div class="aui-list-item-media" style="width:3rem;">
+                        <img id="icon" src="../image/demo1.png" class="aui-img-round">
+                    </div>
+                    <div class="aui-list-item-inner aui-list-item-arrow">
+                        <div id="name" class="aui-list-item-text text-white aui-font-size-18">请登录</div>
+                        <div class="aui-list-item-text text-white">
+                            <div class="phone_num" style="display:none"><i class="aui-iconfont aui-icon-mobile aui-font-size-14"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="aui-content aui-grid aui-margin-b-15">
+        <div class="aui-row">
+            <div class="aui-col-xs-4 aui-border-r">
+                <big class="aui-text-warning">0<small> 个</small></big>
+                <div class="aui-gird-lable aui-font-size-12">待出行</div>
+            </div>
+            <div class="aui-col-xs-4 aui-border-r">
+                <big class="aui-text-danger">0<small> 个</small></big>
+                <div class="aui-gird-lable aui-font-size-12">优惠券</div>
+            </div>
+            <div class="aui-col-xs-4">
+                <big class="aui-text-success">0.00<small> 分</small></big>
+                <div class="aui-gird-lable aui-font-size-12">积分</div>
+            </div>
+        </div>
+    </section>
+    <section class="aui-content">
+        <ul class="aui-list aui-list-in aui-margin-b-15">
+            <li class="aui-list-item">
+                <div class="aui-list-item-label-icon">
+                    <i class="aui-iconfont aui-icon-location aui-text-info"></i>
+                </div>
+                <div class="aui-list-item-inner aui-list-item-arrow" tapmode onclick="OpenMyintoinfo();">
+                    <div class="aui-list-item-title">我的加入</div>
+                </div>
+            </li>
+            <li class="aui-list-item">
+                <div class="aui-list-item-label-icon">
+                    <i class="aui-iconfont aui-icon-like aui-text-danger"></i>
+                </div>
+                <div class="aui-list-item-inner aui-list-item-arrow" tapmode onclick="OpenMyoutinfo();">
+                    <div class="aui-list-item-title" >我的发布</div>
+                </div>
+            </li>
+            <li class="aui-list-item">
+                <div class="aui-list-item-label-icon">
+                    <i class="aui-iconfont aui-icon-image aui-text-info"></i>
+                </div>
+                <div class="aui-list-item-inner aui-list-item-arrow" tapmode onclick="OpenBmap();">
+                    <div class="aui-list-item-title" >打开地图</div>
+                </div>
+            </li>
+        </ul>
+        <ul class="aui-list aui-list-in">
+            <li class="aui-list-item">
+                <div class="aui-list-item-label-icon">
+                    <i class="aui-iconfont aui-icon-cart aui-text-info"></i>
+                </div>
+                <div class="aui-list-item-inner aui-list-item-arrow" tapmode onclick="OpenMsgBox();">
+                    <div class="aui-list-item-title">申请加入消息</div>
+                    <div id="msg_l" class="aui-list-item-right"></div>
+                </div>
+            </li>
+            <li class="aui-list-item">
+                <div class="aui-list-item-label-icon">
+                    <i class="aui-iconfont aui-icon-cert aui-text-warning"></i>
+                </div>
+                <div class="aui-list-item-inner aui-list-item-arrow" tapmode onclick="OpenSetting();">
+                    <div class="aui-list-item-title">设置</div>
+                </div>
+            </li>
+        </ul>
+    </section>
+    <br>
+    <div class="button red" tapmode onclick="FnLogout();">
+        <div class="shine" >安全退出账号</div>
+    </div>
+
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/SHA1.js"></script>
+<script type="text/javascript">
+apiready = function () {
+
+  fnCheckMsg();
+
+  //初始化用户信息
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  if(userInfo && username){
+    fnGetUserInfo();
+  }
+  SetUserInfo();
+
+  api.addEventListener({
+      name: 'finishlogin'
+  }, function(ret, err){
+    fnGetUserInfo();
+    SetUserInfo();
+  });
+}
+
+
+// 打开消息盒子
+function OpenMsgBox() {
+  api.openWin({
+      name: 'msgbox',
+      url: './msg/msgbox.html',
+      pageParam: {
+          name: 'test'
+      }
+  });
+
+}
+
+// 检查消息并标记出
+function fnCheckMsg() {
+  var userInfo = $api.getStorage('userInfo');
+  if(userInfo){
+    var params = {
+        fields: {
+            createdAt: false,
+            updatedAt: false
+        },
+        where: {
+          end_id: userInfo.userId,
+          status: 0,
+        },
+        skip: 0,
+        limit: 998
+    }
+    params = $api.jsonToStr(params);
+    api.ajax({
+        url: 'https://d.apicloud.com/mcm/api/msg?filter='+ params,
+        method: 'get',
+        headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+        }
+    },function(ret, err){
+      // alert( JSON.stringify( ret )+userInfo.userId );
+      if (ret!="") {
+        var msg_l = $api.byId("msg_l");
+        $api.html(msg_l, '<div id=\"msg_l\" class=\"aui-list-item-right\">'+ret.length+'</div>');
+      }
+    })
+  }
+}
+
+
+//打开设置界面
+function OpenSetting(){
+  api.openFrame({
+      name: 'setting',
+      url: './userinfo/setting.html',
+      rect: {
+          x: 0,
+          y: 50,
+          w: 'auto',
+          h: 'auto'
+      },
+      pageParam: {
+          name: 'test'
+      },
+      bgColor: 'rgba(255,255,255,1)',
+      vScrollBarEnabled: true,
+      hScrollBarEnabled: true
+  });
+
+
+
+}
+
+//根据用户是否登陆设置头像
+function fnGetUserInfo(){
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  api.ajax({
+      url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+      method: 'get',
+      headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+          "Authorization": userInfo.id
+      }
+  },function(ret, err){
+      if (userInfo && username) {
+          //alert( JSON.stringify( ret.avater_url ) );
+          fnUpdateLocalAvater(ret.avater_url);
+      }else{
+        var icon = $api.byId('icon');
+        icon.src = "../image/demo1.png";
+        $api.rmStorage('userInfo');
+      }
+  });
+
+}
+
+//根据用户是否登录设置信息
+function OrTodologin(){
+  // 从缓存中获取用户信息
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  // 判断当前用户是否登录了
+  if (userInfo && username) {
+      // 登录成功，重置
+      SetUserInfo();
+      fnSetAvatar();
+  } else {
+    api.openWin({
+        name: 'dologin',
+        url: './login/dologin.html',
+        pageParam: {
+            name: 'test'
+        }
+    });
+  }
+}
+
+//获取缓存数据显示界面
+function SetUserInfo(){
+  // 从缓存中获取用户信息
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  var name_title = $api.byId('name');
+  if(userInfo && username){
+    $api.html(name_title, username);
+  }else{
+    $api.html(name_title, "请登录");
+  }
+}
+
+//退出登录
+function FnLogout() {
+  // 从缓存中获取用户信息
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+    if(userInfo && username){
+      api.confirm({
+          title: '提示',
+          msg: '是否退出登录',
+          buttons: ['确定', '取消']
+      }, function(ret, err) {
+          if (ret) {
+              if (1 == ret.buttonIndex) {
+                  $api.rmStorage('username');
+                  SetUserInfo();
+                  fnGetUserInfo();
+                  api.closeToWin({
+                      name: 'main'
+                  });
+              }
+          }
+      });
+    }else{
+      api.alert({
+          title: '请先登录~~~',
+          msg: '你还没登陆哦！亲',
+      }, function(ret, err){});
+    }
+}
+
+//打开上传头像
+function fnSetAvatar(){
+  api.actionSheet({
+      title: '选择',
+      cancelTitle: '取消',
+      buttons: ['相册']
+  }, function(ret, err){
+      if( ret.buttonIndex==1  ){
+
+           var UIMediaScanner = api.require('UIMediaScanner');
+             UIMediaScanner.open({
+                 type: 'picture',
+                 column: 4,
+                 classify: true,
+                 max: 1,
+                 sort: {
+                     key: 'time',
+                     order: 'desc'
+                 },
+                 texts: {
+                     stateText: '已选择*项',
+                     cancelText: '取消',
+                     finishText: '完成'
+                 },
+                 styles: {
+                     bg: '#fff',
+                     mark: {
+                         icon: '',
+                         position: 'bottom_left',
+                         size: 20
+                     },
+                     nav: {
+                         bg: '#eee',
+                         stateColor: '#000',
+                         stateSize: 18,
+                         cancelBg: 'rgba(0,0,0,0)',
+                         cancelColor: '#000',
+                         cancelSize: 18,
+                         finishBg: 'rgba(0,0,0,0)',
+                         finishColor: '#000',
+                         finishSize: 18
+                     }
+                 },
+                 scrollToBottom:{
+                    intervalTime: 3,
+                    anim: true
+                 },
+                 exchange: true,
+                 rotation: true
+             }, function( ret ){
+                 if(ret&&ret.eventType!='cancel'){
+                    //  上传图片
+                    fnUploadAvatar(ret.list[0].path);
+                 }
+             });
+      }
+  });
+}
+var lod_id;
+
+//将头像上传值服务器
+function fnUploadAvatar(avatarUrl){
+//打开上传等待是的loading界面
+  var UILoading = api.require('UILoading');
+  UILoading.flower({
+      size: 30,
+      fixed: true
+  }, function(ret) {
+      lod_id=ret.id;
+  });
+
+  api.ajax({
+      url: 'http://d.apicloud.com/mcm/api/file',
+      method: 'post',
+      headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+      },
+      data: {
+          values: {
+              name: 'icon'
+          },
+          files: {
+              file: avatarUrl
+          }
+      }
+  },function(ret, err){
+      if (ret) {
+          //跟新头像
+          fnUpdateUserAvater(ret.url);
+      }
+  });
+}
+
+//更新头像SRC
+function fnUpdateLocalAvater(avater_url){
+  if(avater_url){
+    var icon = $api.byId('icon');
+    icon.src = avater_url;
+    //更新结束，关闭loading
+      var UILoading = api.require('UILoading');
+      UILoading.closeFlower({
+          id: lod_id
+      });
+  }else{
+    var icon = $api.byId('icon');
+    icon.src = "../image/demo1.png";
+  }
+}
+
+//将头像URL传递给数据库用户表中的当前用户
+function fnUpdateUserAvater(S_avatarUrl){
+  var userInfo = $api.getStorage('userInfo');
+  api.ajax({
+      url: 'http://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+      method: 'put',
+      headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+          "Authorization": userInfo.id
+      },
+      data: {
+        values: {
+            "avater_url": S_avatarUrl
+        }
+      }
+  },function(ret, err){
+      if (ret) {
+          //alert("ret" +JSON.stringify(ret.avatar_url) );
+          fnUpdateLocalAvater(ret.avater_url);
+      }
+  });
+}
+
+// 打开我加入的出行
+function OpenMyintoinfo() {
+  var UILoading = api.require('UILoading');
+  UILoading.flower({
+      size: 30,
+      fixed: true
+  }, function(ret) {
+      lod_id=ret.id;
+  });
+  var userInfo = $api.getStorage('userInfo');
+  api.ajax({
+    url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+    method: 'get',
+    headers: {
+        "X-APICloud-AppId": "A6075394048820",
+        "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+        "Authorization": userInfo.id
+    }
+  },function(ret, err){
+      if (ret.into_id=="") {
+          UILoading.closeFlower({
+              id: lod_id
+          });
+          alert( "你还没有加入其它出游" );
+      } else {
+          api.ajax({
+            url: 'https://d.apicloud.com/mcm/api/useroutlist/'+ret.into_id,
+            method: 'get',
+            headers: {
+                "X-APICloud-AppId": "A6075394048820",
+                "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+            }
+          },function(ret, err){
+            if (ret) {
+                UILoading.closeFlower({
+                    id: lod_id
+                });
+                api.openWin({
+                    name: 'outinfo',
+                    url: './shouye/outinfo.html',
+                    pageParam: {
+                        id: ret.id,
+                        m_user_url: ret.user_url,
+                    }
+                });
+              }
+          });
+
+      }
+  });
+
+}
+
+
+//打开我发布的出行
+function OpenMyoutinfo() {
+  var UILoading = api.require('UILoading');
+  UILoading.flower({
+      size: 30,
+      fixed: true
+  }, function(ret) {
+      lod_id=ret.id;
+  });
+
+
+  var userInfo = $api.getStorage('userInfo');
+
+  api.ajax({
+    url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+    method: 'get',
+    headers: {
+        "X-APICloud-AppId": "A6075394048820",
+        "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+        "Authorization": userInfo.id
+    }
+  },function(ret, err){
+      if (!ret.creat_id) {
+          UILoading.closeFlower({
+              id: lod_id
+          });
+          alert("您还没有发布出游");
+          api.openWin({
+              name: 'UpUserOutInfo',
+              url: './shouye/UpUserOutInfo.html',
+              pageParam: {
+                  name: 'test'
+              }
+          });
+      } else {
+          api.ajax({
+            url: 'https://d.apicloud.com/mcm/api/useroutlist/'+ret.creat_id,
+            method: 'get',
+            headers: {
+                "X-APICloud-AppId": "A6075394048820",
+                "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+            }
+          },function(ret, err){
+            //id pic未去\\  该有的都有
+              if (ret) {
+                UILoading.closeFlower({
+                    id: lod_id
+                });
+                  api.openWin({
+                      name: 'outinfo',
+                      url: './shouye/outinfo.html',
+                      pageParam: {
+                          id: ret.id,
+                          m_user_url: ret.user_url,
+                      }
+                  });
+                }
+          });
+      }
+  });
+}
+
+
+function OpenBmap(){
+  api.openWin({
+      name: 'B_map',
+      url: './map/b_map_win.html',
+      pageParam: {
+          name: 'test'
+      }
+  });
+
+}
+
+</script>
+</html>

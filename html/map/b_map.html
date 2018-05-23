@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+      <title>title</title>
+      <link rel="stylesheet" type="text/css" href="../../css/api.css"/>
+      <style>
+          body{
+
+          }
+      </style>
+  </head>
+  <body>
+
+  </body>
+  <script type="text/javascript" src="../../script/api.js"></script>
+  <script type="text/javascript">
+      apiready = function(){
+        var map = api.require('bMap');
+        // 打开地图
+        map.open({
+          rect: {
+              x: 0,
+              y: 0,
+              w: "auto",
+              h: "auto"
+          },
+          zoomLevel: 10,
+          showUserLocation: true,
+          fixedOn: api.frameName,
+          fixed: true
+        }, function(ret) {
+          if (ret.status) {
+              // alert('地图打开成功');
+
+              // 设置地图初始显示范围等级3-18
+              map.setZoomLevel({
+                  level: 14
+              });
+
+              // 设置比例尺位子
+              map.setScaleBar({
+                  show: true,
+                  position: {
+                      x: 20,
+                      y: api.winHeight*0.85
+                  }
+              });
+
+              //开始定位
+              map.showUserLocation({
+                  isShow: true,
+                  trackingMode: 'none'
+              });
+
+
+          }
+      });
+
+
+
+
+      };
+  </script>
+  </html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+      <title>title</title>
+      <link rel="stylesheet" type="text/css" href="../../css/api.css"/>
+      <link rel="stylesheet" type="text/css" href="../../css/shouye/outinfo.css"/>
+      <style>
+          body{
+            background-image: linear-gradient(to top, #000,#fff);
+            height: 450px;
+          }
+      </style>
+  </head>
+  <body>
+    <div class="cont">
+      <div class="cont_top">
+        <div id="m_title" class="title"></div>
+        <div id="m_num" class="user_num">?</div>
+        <div class="user_box">
+          <img :src="" alt="" class="avatar_box" id="m_url"/>
+          <span id="m_name"></span>
+        </div>
+      </div>
+      <div id="m_text" class="cont_text"></div>
+      <div id="j_in"></div>
+      <div id="j_out"></div>
+      <div id="j_i_people"></div>
+      <div id="c_out"></div>
+    </div>
+
+  </body>
+  <script type="text/javascript" src="../../script/api.js"></script>
+  <script type="text/javascript" src="../../script/SHA1.js"></script>
+  <script type="text/javascript">
+  apiready = function(){
+    var item_info = api.pageParam;
+
+    //获取服务器出游表信息
+    fnGetServerOutListInfo(item_info);
+
+    //判断是否为当前出游发布者进行查看
+    fnCheckUserInfo(item_info);
+  }
+
+  function fnCheckUserInfo(item_info) {
+    var userInfo = $api.getStorage('userInfo');
+    var username = $api.getStorage('username');
+    if(userInfo && username){
+      api.ajax({
+        url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+        method: 'get',
+        headers: {
+            "X-APICloud-AppId": "A6075394048820",
+            "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+            "Authorization": userInfo.id
+        }
+      },function(ret, err){
+          if (ret.creat_id!=item_info.id) {
+              //非登录人用户发布 申请加入按钮
+              var in_join = $api.byId('j_in');
+              var out_join = $api.byId('j_out');
+              $api.html(in_join, '<div id=\"j_in\"  tapmode onclick=\"join_in();\">申请加入</div>');
+              $api.addCls(in_join,'join_in');
+              $api.html(out_join, '<div id=\"j_out\"  tapmode onclick=\"join_out();\">退出加入</div>');
+              $api.addCls(out_join,'cancle_out');
+          } else if(ret.creat_id==item_info.id){
+              //为登录人用户 加入查看人数和取消出游按钮
+              var out_cancle = $api.byId('c_out');
+              var j_i_people = $api.byId('j_i_people');
+              // $api.html(j_i_people, '<div id=\"j_i_people\"  tapmode onclick=\"CheckJoinUser();\">查看加入成员</div>');
+              // $api.addCls(j_i_people,'join_in');
+              $api.html(out_cancle, '<div id=\"c_out\"  tapmode onclick=\"cancle_out();\">取消行程</div>');
+              $api.addCls(out_cancle,'cancle_out');
+          }
+      });
+    }else {
+
+    }
+  }
+
+// 退出加入的出游
+function join_out() {
+  var item_info = api.pageParam;
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  api.actionSheet({
+    title: '选择',
+    cancelTitle: '不，反悔了',
+    buttons: ['确认退出']
+  }, function(ret, err){
+      if( ret.buttonIndex==1 ){
+          //  alert( JSON.stringify( ret ) );
+          // 打开loading
+          var UILoading = api.require('UILoading');
+          UILoading.flower({
+              size: 30,
+              fixed: true
+          }, function(ret) {
+              lod_id=ret.id;
+          });
+          api.ajax({
+            url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+            method: 'get',
+            headers: {
+                "X-APICloud-AppId": "A6075394048820",
+                "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                "Authorization": userInfo.id
+            }
+          },function(ret, err){
+              if (ret.into_id==item_info.id) {
+                // 退出加入
+                api.ajax({
+                    url: 'https://d.apicloud.com/mcm/api/useroutlist/'+item_info.id,
+                    method: 'get',
+                    headers: {
+                        "X-APICloud-AppId": "A6075394048820",
+                        "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                        "Authorization": userInfo.id
+                    },
+                },function(ret, err){
+                    if (ret) {
+                      var data = [];
+                      // 调用组件进行布局
+                      for (var i = 0; i < replaceintojson(ret.into_user).length; i++) {
+                        if(replaceintojson(ret.into_user)[i].name!=username){
+                          var j = {};
+                          j.name = replaceintojson(ret.into_user)[i].name;
+                          data.push(j);
+                          }
+                      }
+                      var num = parseInt(ret.into_usernum)-1;
+                      api.ajax({
+                        url: 'https://d.apicloud.com/mcm/api/useroutlist/'+item_info.id,
+                        method: 'put',
+                        headers: {
+                            "X-APICloud-AppId": "A6075394048820",
+                            "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                            "Authorization": userInfo.id
+                        },
+                        data: {
+                          values: {
+                              'into_user': data,
+                              'into_usernum':num
+                          },
+                         }
+                      },function(ret, err){
+                          if (ret) {
+                              api.ajax({
+                                url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+                                method: 'put',
+                                headers: {
+                                    "X-APICloud-AppId": "A6075394048820",
+                                    "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                    "Authorization": userInfo.id
+                                },
+                                data: {
+                                  values: {
+                                      'into_id': "",
+                                  },
+                                 }
+                              },function(ret, err){
+                                  if (ret) {
+                                    // 关闭loading
+                                      var UILoading = api.require('UILoading');
+                                      UILoading.closeFlower({
+                                          id: lod_id
+                                      });
+                                      alert( "成功退出当前出游" );
+                                  }
+                              });
+
+                          }
+                      });
+
+                    }
+                });
+              } else {
+                // 关闭loading
+                  var UILoading = api.require('UILoading');
+                  UILoading.closeFlower({
+                      id: lod_id
+                  });
+                  alert( "你并没有加入此出游" );
+              }
+          });
+
+
+
+      }
+  });
+
+}
+
+//取消出行方法
+function cancle_out() {
+  var item_info = api.pageParam;
+  var userInfo = $api.getStorage('userInfo');
+  //打开底部选择器
+  api.actionSheet({
+      title: '选择',
+      cancelTitle: '不，反悔了',
+      buttons: ['确认取消']
+  }, function(ret, err){
+    if( ret.buttonIndex==1  ){
+      var UILoading = api.require('UILoading');
+      UILoading.flower({
+          size: 30,
+          fixed: true
+      }, function(ret) {
+          lod_id=ret.id;
+      });
+      //选择取消行程，删除服务器相关数据
+         //出游表行
+      api.ajax({
+          url: 'https://d.apicloud.com/mcm/api/useroutlist/'+item_info.id,
+          method: 'DELETE',
+          headers: {
+              "X-APICloud-AppId": "A6075394048820",
+              "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+              "Authorization": userInfo.id
+          }
+      },function(ret, err){
+          if (ret) {
+            //用户表creat_id列
+            api.ajax({
+                url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+                method: 'put',
+                headers: {
+                    "X-APICloud-AppId": "A6075394048820",
+                    "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                    "Authorization": userInfo.id
+                },
+                data: {
+                    values: {
+                        "creat_id": ""
+                    },
+                }
+            },function(ret, err){
+                if (ret) {
+                    var UILoading = api.require('UILoading');
+                    UILoading.closeFlower({
+                        id: lod_id
+                    });
+                    alert("已取消")
+                    api.closeWin({
+                        name: 'outinfo'
+                    });
+                    api.sendEvent({
+                        name: 'cancle_out_toREF',
+                        extra: {
+                            key1: 'finish_to_Cancle',
+                        }
+                    });
+
+                }
+            });
+          }
+      });
+    }
+  });
+
+}
+
+//加入出行
+function join_in() {
+  var item_info = api.pageParam;
+  var userInfo = $api.getStorage('userInfo');
+  var username = $api.getStorage('username');
+  // 打开loading
+  var UILoading = api.require('UILoading');
+  UILoading.flower({
+      size: 30,
+      fixed: true
+  }, function(ret) {
+      lod_id=ret.id;
+  });
+  // 判断用户是否已经加入
+  api.ajax({
+    url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+    method: 'get',
+    headers: {
+        "X-APICloud-AppId": "A6075394048820",
+        "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+        "Authorization": userInfo.id
+    }
+  },function(ret, err){
+      var url_ret = ret.avater_url;
+      if (ret.into_id=="") {
+        // 判断用户是否已经申请该出行
+        // 查询发布用户ID
+        api.ajax({
+            url: 'https://d.apicloud.com/mcm/api/useroutlist/'+item_info.id,
+            method: 'get',
+            headers: {
+              "X-APICloud-AppId": "A6075394048820",
+              "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+            }
+        },function(ret, err){
+            if (ret) {
+                // alert( JSON.stringify( ret ) );
+                var id_end = ret.m_userid
+                var params = {
+                    fields: {
+                        createdAt: false,
+                        updatedAt: false
+                    },
+                    where: {
+                      start_id: userInfo.userId,
+                      end_id: id_end,
+                      status: 0
+                    },
+                    skip: 0,
+                    limit: 1
+                }
+                params = $api.jsonToStr(params);
+                api.ajax({
+                    url: 'https://d.apicloud.com/mcm/api/msg?filter='+ params,
+                    method: 'get',
+                    headers: {
+                      "X-APICloud-AppId": "A6075394048820",
+                      "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+                    }
+                },function(ret, err){
+                  // alert(JSON.stringify(ret));
+                    if (ret!="") {
+                      // 关闭loading
+                        var UILoading = api.require('UILoading');
+                        UILoading.closeFlower({
+                            id: lod_id
+                        });
+                      api.toast({
+                          msg: '你已经申请该出行了',
+                          duration: 2000,
+                          location: 'bottom'
+                      });
+                    } else {
+                      // 用户未申请，发起申请
+                      api.ajax({
+                          url: 'https://d.apicloud.com/mcm/api/msg/',
+                          method: 'put',
+                          headers: {
+                              "X-APICloud-AppId": "A6075394048820",
+                              "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                              "Authorization": userInfo.id
+                          },
+                          data: {
+                              values: {
+                                  'start_id': userInfo.userId,
+                                  'end_id': id_end,
+                                  'status': 0,
+                                  "start_name": username
+                              },
+                          }
+                      },function(ret, err){
+                        if(ret){
+                          // 关闭loading
+                            var UILoading = api.require('UILoading');
+                            UILoading.closeFlower({
+                                id: lod_id
+                            });
+                          alert("申请成功，等待处理");
+                        }  else{
+                          // 关闭loading
+                            var UILoading = api.require('UILoading');
+                            UILoading.closeFlower({
+                                id: lod_id
+                            });
+                          api.toast({
+                              msg: '网络错误',
+                              duration: 2000,
+                              location: 'bottom'
+                          });
+                        }
+                      });
+                    }
+                });
+            }
+        });
+      }else{
+        // 关闭loading
+          var UILoading = api.require('UILoading');
+          UILoading.closeFlower({
+              id: lod_id
+          });
+        api.toast({
+            msg: '你已经加入了出行了',
+            duration: 2000,
+            location: 'bottom'
+        });
+      }
+  });
+}
+
+
+
+  var list=[];
+  function fnGetServerOutListInfo(out_info) {
+    api.ajax({
+        url: 'http://d.apicloud.com/mcm/api/useroutlist/' + out_info.id,
+        method: 'get',
+        headers: {
+          "X-APICloud-AppId": "A6075394048820",
+          "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476
+        }
+    },function(ret, err){
+        if (ret) {
+          if(replacepic1(ret.url1)){
+            list[0]=replacepic1(ret.url1);
+          }
+          if(replacepic2(ret.url1)){
+            list[1]=replacepic2(ret.url1);
+          }
+          if(replacepic3(ret.url1)){
+            list[2]=replacepic3(ret.url1);
+          }
+            //set图片浏览信息
+            fnSetOutInfo();
+
+            //set其他出游信息
+            fnSetOutInfo_noimg(ret,out_info);
+        } else {
+            alert( "获取失败·····喵喵喵？" );
+        }
+    });
+
+  }
+
+  //set图片浏览框
+  function fnSetOutInfo(){
+    var UIScrollPicture = api.require('UIScrollPicture');
+    UIScrollPicture.open({
+        rect: {
+            x: 0,
+            y: 0,
+            w: api.winWidth,
+            h: api.winHeight / 2
+        },
+        data: {
+            paths: list
+        },
+        styles: {
+            caption: {
+                height: 35,
+                color: '#E0FFFF',
+                size: 13,
+                bgColor: '#696969',
+                position: 'bottom'
+            },
+            indicator: {
+                align: 'center',
+                color: '#FFFFFF',
+                activeColor: '#DA70D6'
+            }
+        },
+        // placeholderImg: 'widget://image/bottombtn0301.png',
+        contentMode: 'scaleAspectFit',
+        // interval: 3,
+        fixedOn: api.frameName,
+        loop: false,
+        fixed: false
+    }, function(ret, err){});
+  }
+
+  //set其他出游信息
+  function fnSetOutInfo_noimg(obj,out_info){
+    var m_title = $api.byId('m_title');
+    var m_num = $api.byId('m_num');
+    var m_url = $api.byId('m_url');
+    var m_name = $api.byId('m_name');
+    var m_text = $api.byId('m_text');
+    // api.alert({
+    //     title: 'testtitle',
+    //     msg: out_info.m_user_url,
+    // }, function(ret, err){});
+
+    $api.html(m_title,"&nbsp"+obj.title);
+    // m_title.text = obj.title;
+    m_url.src = out_info.m_user_url;
+    $api.html(m_name,obj.user_name);
+    $api.html(m_text,"&nbsp&nbsp&nbsp&nbsp"+obj.text);
+  }
+
+  function replacepic1(val) {
+    val.replace('\\','')
+    var url1 = JSON.parse(val)
+    return url1.pic1
+  }
+
+  function replacepic2(val) {
+    val.replace('\\','')
+    var url1 = JSON.parse(val)
+    return url1.pic2
+  }
+
+  function replacepic3(val) {
+    val.replace('\\','')
+    var url1 = JSON.parse(val)
+    return url1.pic3
+  }
+
+  function replaceintojson(val) {
+    val.replace('\\','')
+    var url1 = JSON.parse(val)
+    return url1
+  }
+
+  </script>
+  </html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>讨论区</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/frame1.css"/>
+    <style>
+        .empty{ text-align: center; padding: 120px 0; }
+    </style>
+</head>
+<body>
+    <div class="empty"></div>
+
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/SHA1.js"></script>
+<script type="text/javascript">
+    apiready = function(){
+      fnReadyChatbox();
+    };
+
+    function fnReadyChatbox() {
+      // if登录
+      var data = [];
+      var userInfo = $api.getStorage('userInfo');
+      var username = $api.getStorage('username');
+      if(userInfo && username){
+        var params = {
+            fields: {},
+            where: {
+              m_userid: userInfo.userId
+            },
+            skip: 0,
+            limit: 1
+        }
+        params = $api.jsonToStr(params);
+
+        api.ajax({
+            url: 'https://d.apicloud.com/mcm/api/useroutlist?filter='+params,
+            method: 'get',
+            headers: {
+                "X-APICloud-AppId": "A6075394048820",
+                "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+            },
+        },function(ret, err){
+            if (ret) {
+                // 查询加入当前用户发布出游的用户
+                var ret_m = ret;
+                var i;
+
+                // 查询当前用户加入的出游的发布用户
+                api.ajax({
+                    url: 'https://d.apicloud.com/mcm/api/user/'+userInfo.userId,
+                    method: 'get',
+                    headers: {
+                        "X-APICloud-AppId": "A6075394048820",
+                        "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                        "Authorization": userInfo.id
+                    },
+                },function(ret, err){
+                    if (ret.into_id != "") {
+                      api.ajax({
+                          url: 'https://d.apicloud.com/mcm/api/useroutlist/'+ret.into_id,
+                          method: 'get',
+                          headers: {
+                              "X-APICloud-AppId": "A6075394048820",
+                              "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                              "Authorization": userInfo.id
+                          },
+                      },function(ret, err){
+                          if (ret) {
+                              // alert( JSON.stringify( ret ) );
+                              var j = {};
+                              j.imgPath = ret.user_url;
+                              j.title = ret.user_name;
+                              j.subTitle = "·我的组长·";
+                              data.push(j);
+                              // alert(JSON.stringify(data));
+                              if(replacejson( ret_m[0].into_user ).length==1){
+                                fnSetChatbox(data);
+                              }
+                              for( i = 1; i < replacejson( ret_m[0].into_user ).length; i++){
+                                var params1 = {
+                                    fields: {},
+                                    where: {
+                                      username: replacejson( ret_m[0].into_user )[i].name,
+                                    },
+                                    skip: 0,
+                                    limit: 1
+                                }
+                                params1 = $api.jsonToStr(params1);
+                                api.ajax({
+                                    url: 'https://d.apicloud.com/mcm/api/user?filter='+ params1,
+                                    method: 'get',
+                                    headers: {
+                                      "X-APICloud-AppId": "A6075394048820",
+                                      "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                                    }
+                                },function(ret, err){
+                                    if (ret) {
+                                        // alert( JSON.stringify( ret ) );
+                                        var j = {};
+                                        j.imgPath = ret[0].avater_url;
+                                        j.title = ret[0].username;
+                                        j.subTitle = "？个性签名？";
+                                        data.push(j);
+                                        // alert(JSON.stringify(data));
+                                        fnSetChatbox(data);
+                                    }
+                                });
+                              }
+                          }
+                      });
+                    }
+                    else{
+                      // alert(JSON.stringify(data));
+                      if(userInfo && username){
+                        for( i = 1; i < replacejson( ret_m[0].into_user ).length; i++){
+                          var params1 = {
+                              fields: {},
+                              where: {
+                                username: replacejson( ret_m[0].into_user )[i].name,
+                              },
+                              skip: 0,
+                              limit: 1
+                          }
+                          params1 = $api.jsonToStr(params1);
+                          api.ajax({
+                              url: 'https://d.apicloud.com/mcm/api/user?filter='+ params1,
+                              method: 'get',
+                              headers: {
+                                "X-APICloud-AppId": "A6075394048820",
+                                "X-APICloud-AppKey": SHA1("A6075394048820"+"UZ"+"8F63F3-672B-4A37-7DA9-A23D3F1D991C"+"UZ"+1482500122476)+"."+1482500122476,
+                              }
+                          },function(ret, err){
+                              if (ret) {
+                                  // alert( JSON.stringify( ret ) );
+                                  var j = {};
+                                  j.imgPath = ret[0].avater_url;
+                                  j.title = ret[0].username;
+                                  j.subTitle = "？个性签名？";
+                                  data.push(j);
+                                  // alert(JSON.stringify(data));
+                                  fnSetChatbox(data);
+                              }
+                          });
+                        }
+                      }
+                    }
+                });
+
+            }
+        });
+      }
+    }
+
+
+    //
+    function fnSetChatbox(data) {
+      var data_m = data;
+      var UIListView = api.require('UIListView');
+      UIListView.open({
+          rect: {
+              x: 0,
+              y: 0,
+              w: api.winWidth,
+              h: api.frameHeight
+          },
+          data: data,
+          styles: {
+              borderColor: '#696969',
+              item: {
+                  bgColor: '#fff',
+                  activeBgColor: '#F5F5F5',
+                  height: 80.0,
+                  imgWidth: 75,
+                  imgHeight: 75,
+                  imgCorner: 0,
+                  placeholderImg: '',
+                  titleSize: 14.0,
+                  titleColor: '#000',
+                  subTitleSize: 12.0,
+                  subTitleColor: '#000',
+                  remarkColor: "rgb(224,108,106)",
+                  remarkSize: 16,
+                  remarkIconWidth: 30
+              }
+          },
+          fixedOn: api.frameName,
+          showScrollBar: true
+      }, function(ret, err) {
+        // 根据点击进行下一步操作进入聊天
+        // alert(JSON.stringify(ret))
+        if(ret.eventType == "clickContent"){
+          fnintoChat(data_m,ret.index);
+        }
+      });
+    }
+
+
+    //进入聊天
+    function fnintoChat(data,ret_i) {
+      // if(data[0].subTitle==".我的组长."){
+      //
+      // }
+      // alert(data[ret_i].title);
+      api.openWin({
+          name: 'chat',
+          url: './Chat/Chat_w.html',
+          vScrollBarEnabled : false,
+          pageParam : {
+            zh : data[ret_i].title,
+            tx : data[ret_i].imgPath,
+          }
+      });
+    }
+
+    function replacejson(val) {
+      val.replace('\\','')
+      var url1 = JSON.parse(val)
+      return url1
+    }
+</script>
+</html>
